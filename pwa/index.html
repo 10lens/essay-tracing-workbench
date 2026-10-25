@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f6fb">
+  <meta name="description" content="在本地浏览器中排版作文、预览答题卡并生成可打印的 A3 PDF。作文内容不上传服务器。">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/app-icon-180.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>作文描摹工作台 · Web 版</title>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brandmark" aria-hidden="true"><span></span><span></span><span></span><i>✎</i></div>
+    <div class="brand-copy">
+      <div class="eyebrow">ESSAY TRACING WORKBENCH <span class="version">WEB PREVIEW</span></div>
+      <h1>作文描摹工作台</h1>
+      <p class="subhead">排好作文，预览格位，导出可打印的答题卡。</p>
+    </div>
+    <div class="privacy-pill"><span class="privacy-dot"></span> 本地处理 · 不上传作文</div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="editor-column" aria-label="作文与排版设置">
+      <section class="panel intro-panel">
+        <div class="panel-heading">
+          <div><div class="section-kicker">01 / WRITE</div><h2>作文内容</h2></div>
+          <span class="local-badge"><span class="tiny-dot"></span>自动保存在本机浏览器</span>
+        </div>
+        <label class="field-label" for="essayTitle">作文标题</label>
+        <input id="essayTitle" class="text-input" type="text" maxlength="100" placeholder="输入标题，例如：在平凡中看见成长" autocomplete="off">
+        <div class="field-row body-label-row">
+          <label class="field-label" for="essayBody">正文</label>
+          <span class="field-help">每个非空行作为一个自然段，超长段落自动换行</span>
+        </div>
+        <textarea id="essayBody" class="essay-input" rows="8" placeholder="在这里输入或粘贴作文……"></textarea>
+        <div class="button-row wrap-row">
+          <label class="button button-secondary file-button" for="txtImport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>导入 TXT</label>
+          <input id="txtImport" type="file" accept=".txt,text/plain" hidden>
+          <button id="clearBody" type="button" class="button button-quiet">清空正文</button>
+          <span id="bodyCount" class="micro-stat">0 字</span>
+        </div>
+      </section>
+
+      <section class="panel settings-panel">
+        <div class="panel-heading">
+          <div><div class="section-kicker">02 / TYPOGRAPHY</div><h2>描摹设置</h2></div>
+        </div>
+        <div class="settings-grid">
+          <div class="setting">
+            <label class="field-label" for="titleAlign">标题对齐</label>
+            <select id="titleAlign" class="select-input"><option value="center">居中</option><option value="left">左对齐</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="bodyAlign">正文对齐</label>
+            <select id="bodyAlign" class="select-input"><option value="left">左对齐</option><option value="center">居中</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="indent">段首缩进</label>
+            <select id="indent" class="select-input"><option value="0">0 格</option><option value="1">1 格</option><option value="2" selected>2 格</option><option value="3">3 格</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="paragraphGap">段间距</label>
+            <select id="paragraphGap" class="select-input"><option value="0">不空行</option><option value="1">空 1 行</option><option value="2">空 2 行</option><option value="3">空 3 行</option></select>
+          </div>
+          <div class="setting range-setting">
+            <label class="field-label" for="fontSize">描摹字号 <output id="fontSizeValue">12.5 pt</output></label>
+            <input id="fontSize" type="range" min="8" max="14" step="0.5" value="12.5">
+          </div>
+          <div class="setting range-setting">
+            <label class="field-label" for="gray">字迹灰度 <output id="grayValue">68%</output></label>
+            <input id="gray" type="range" min="40" max="90" step="1" value="68">
+            <span class="range-hint">数值越高，字迹越浅</span>
+          </div>
+          <div class="setting setting-wide">
+            <label class="field-label" for="fontStyle">字体</label>
+            <div class="font-row">
+              <select id="fontStyle" class="select-input"><option value="kai">楷体优先</option><option value="song">宋体优先</option><option value="sans">黑体优先</option></select>
+              <label class="button button-secondary file-button font-upload-button" for="fontImport">选择字体文件</label>
+              <input id="fontImport" type="file" accept=".ttf,.otf,font/ttf,font/otf" hidden>
+              <button id="resetFont" type="button" class="button button-quiet font-reset-button">恢复设备字体</button>
+            </div>
+            <div class="font-status" id="fontStatus">优先使用设备上的楷体；不同设备的字体可能不同。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel critique-panel">
+        <div class="panel-heading">
+          <div><div class="section-kicker">03 / FEEDBACK</div><h2>范文点评 <span class="optional-tag">可选</span></h2></div>
+        </div>
+        <p class="panel-description">点评文字独立排版，始终使用黑色；不影响正文的字号与灰度。</p>
+        <textarea id="critiqueText" class="critique-input" rows="4" placeholder="写下文章优点、修改建议或教师批注……"></textarea>
+        <div class="settings-grid critique-settings">
+          <div class="setting">
+            <label class="field-label" for="critiqueMode">呈现方式</label>
+            <select id="critiqueMode" class="select-input"><option value="card">点评卡片（推荐）</option><option value="sticky">便利贴（遮盖格线）</option><option value="grid">格内黑字</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="critiquePlacement">点评位置</label>
+            <select id="critiquePlacement" class="select-input"><option value="after">正文后留空</option><option value="bottom">最后一行贴近页底</option></select>
+          </div>
+          <div class="setting" id="critiqueGapSetting">
+            <label class="field-label" for="critiqueGap">正文后空行</label>
+            <select id="critiqueGap" class="select-input"><option value="0">0 行</option><option value="1">1 行</option><option value="2" selected>2 行</option><option value="3">3 行</option><option value="4">4 行</option><option value="5">5 行</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="critiqueFontSize">点评字号</label>
+            <select id="critiqueFontSize" class="select-input"><option value="8">8 pt</option><option value="9">9 pt</option><option value="10" selected>10 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="13">13 pt</option><option value="14">14 pt</option></select>
+          </div>
+          <div class="setting">
+            <label class="field-label" for="critiqueAlign">点评对齐</label>
+            <select id="critiqueAlign" class="select-input"><option value="left">左对齐</option><option value="center">居中</option></select>
+          </div>
+        </div>
+        <div class="button-row"><button id="clearCritique" type="button" class="button button-quiet">清空点评</button></div>
+      </section>
+
+      <section class="panel files-panel">
+        <div class="panel-heading">
+          <div><div class="section-kicker">04 / FILES</div><h2>项目与导出</h2></div>
+        </div>
+        <div class="file-actions">
+          <button id="saveProject" type="button" class="button button-secondary">保存项目 JSON</button>
+          <label class="button button-secondary file-button" for="projectImport">打开项目</label>
+          <input id="projectImport" type="file" accept=".json,application/json" hidden>
+          <button id="exportPdf" type="button" class="button button-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>导出 A3 PDF</button>
+        </div>
+        <p class="privacy-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>作文、字体与 PDF 都在当前设备的浏览器中处理。GitHub 只托管网页和空白模板，不接收你的作文内容。</p>
+      </section>
+    </section>
+
+    <section class="preview-column" id="previewColumn" aria-label="实时答题卡预览">
+      <div class="preview-sticky">
+        <section class="panel preview-panel">
+          <div class="panel-heading preview-heading">
+            <div><div class="section-kicker">LIVE PREVIEW</div><h2>实时答题卡预览</h2></div>
+            <span class="paper-badge">A3 横向</span>
+          </div>
+          <div class="preview-toolbar">
+            <div class="preview-stat"><strong id="rowsUsed">0 / 81</strong><span>行已使用</span></div>
+            <div class="preview-stat"><strong id="cellsUsed">1377</strong><span>格总容量</span></div>
+            <button type="button" id="refreshPreview" class="icon-button" title="刷新预览" aria-label="刷新预览"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg></button>
+          </div>
+          <div class="preview-scroll" id="previewScroll">
+            <div class="paper-wrap" id="paperWrap">
+              <img id="previewFallback" src="./assets/answer-template-preview.png" alt="空白答题卡模板预览">
+              <canvas id="previewCanvas" aria-label="作文描摹预览画布"></canvas>
+            </div>
+          </div>
+          <div class="preview-footer">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusMessage" role="status" aria-live="polite">正在加载答题卡模板……</span>
+          </div>
+          <div id="warningBox" class="warning-box" hidden></div>
+        </section>
+        <div class="preview-tip"><span class="tip-icon">✦</span><span>预览使用当前屏幕字体；导出 PDF 时会以高分辨率叠加文字，并保留答题卡原始矢量格线。</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer"><span>作文描摹工作台 <span class="footer-separator">·</span> Web 版</span><span>由「旷淡」制作 <span class="footer-separator">·</span> 离线能力需首次联网加载</span></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    // Independent watchdog: keep a useful diagnostic visible even if the ES module
+    // fails to load (for example, if app.js or layout.js is missing from Pages).
+    window.setTimeout(() => {
+      const status = document.getElementById("statusMessage");
+      const warning = document.getElementById("warningBox");
+      const dot = document.getElementById("statusDot");
+      if (status && status.textContent.trim() === "正在加载答题卡模板……") {
+        status.textContent = "预览初始化超时。请检查 app.js、layout.js 和 assets 文件夹是否都在网站根目录。";
+        if (dot) dot.style.background = "#c45360";
+        if (warning) {
+          warning.hidden = false;
+          warning.textContent = "网页已显示空白答题卡底图，但交互脚本未完成初始化。请确认 GitHub 仓库根目录同时包含 index.html、app.js、layout.js、styles.css、sw.js 及 assets/answer-template-preview.png，然后强制刷新。";
+        }
+      }
+    }, 8000);
+  </script>
+</body>
+</html>
