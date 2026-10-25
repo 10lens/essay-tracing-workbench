@@ -32,10 +32,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 h1 { margin: 5px 0 3px; font-size: clamp(20px, 2.4vw, 25px); letter-spacing: -.035em; line-height: 1.2; }
 .subhead { margin: 0; color: var(--muted); font-size: 12px; }
 .privacy-pill { margin-left: auto; border: 1px solid #dcefe7; border-radius: 999px; color: #477e69; font-size: 11px; padding: 8px 11px; white-space: nowrap; background: #f7fcf9; display: flex; align-items: center; gap: 7px; }
+.preview-jump { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 0 11px; border: 1px solid #dfe4f2; border-radius: 9px; background: #fff; color: #4e5fc0; font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; flex: 0 0 auto; }
+.preview-jump:hover { border-color: #c4ccef; background: #f7f8ff; }
 .privacy-dot, .tiny-dot, .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #45a880; flex: 0 0 auto; }
-.workspace { display: grid; grid-template-columns: minmax(360px, .92fr) minmax(0, 1.08fr); align-items: start; gap: 22px; padding: 25px clamp(16px, 2.5vw, 36px) 34px; max-width: 1920px; margin: 0 auto; }
-.editor-column { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.preview-column { min-width: 0; align-self: stretch; }
+.workspace { display: grid; grid-template-areas: "editor preview"; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: start; gap: 22px; padding: 25px clamp(16px, 2.5vw, 36px) 34px; max-width: 1920px; margin: 0 auto; }
+.editor-column { grid-area: editor; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+/* Keep the preview as a real layout area even when the app module fails. In stacked mode it moves below the editor, never disappears. */
+#previewColumn.preview-column { grid-area: preview; display: block; visibility: visible; min-width: 0; align-self: stretch; scroll-margin-top: 14px; }
 .preview-sticky { position: sticky; top: 16px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 17px; box-shadow: var(--shadow); padding: 20px; min-width: 0; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
@@ -115,9 +118,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); display: block; 
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 button:disabled { cursor: wait; opacity: .65; }
 @media (max-width: 960px), (max-aspect-ratio: 1/1) {
-  .workspace { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 17px; }
-  .editor-column { order: 1; }
-  .preview-column { order: 2; }
+  .workspace { grid-template-areas: "editor" "preview"; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 17px; }
+  .editor-column, #previewColumn.preview-column { grid-column: 1; }
+
   .preview-sticky { position: static; }
   .preview-panel { padding: clamp(12px, 3.2vw, 18px); }
   .preview-scroll { padding: 6px; }
@@ -126,7 +129,7 @@ button:disabled { cursor: wait; opacity: .65; }
   .panel { padding: clamp(15px, 3vw, 20px); border-radius: 15px; }
 }
 @media (max-width: 560px) {
-  .topbar { padding: 16px; gap: 11px; min-height: auto; align-items: flex-start; }
+  .topbar { padding: 16px; gap: 11px; min-height: auto; align-items: flex-start; flex-wrap: wrap; }
   .brandmark { width: 40px; height: 40px; flex-basis: 40px; border-radius: 12px; }
   .brandmark span { height: 20px; width: 6px; }
   .brandmark span:nth-child(2) { height: 25px; }
@@ -135,8 +138,9 @@ button:disabled { cursor: wait; opacity: .65; }
   .version { font-size: 7px; }
   h1 { font-size: 20px; margin-top: 5px; }
   .subhead { font-size: 10px; line-height: 1.5; }
-  .privacy-pill { margin-top: 1px; padding: 6px 7px; font-size: 0; gap: 0; }
+  .privacy-pill { margin-left: auto; margin-top: 1px; padding: 6px 7px; font-size: 0; gap: 0; }
   .privacy-pill .privacy-dot { width: 7px; height: 7px; }
+  .preview-jump { order: 5; width: 100%; min-height: 36px; }
   .workspace { padding: 12px 10px 24px; gap: 12px; }
   .panel { padding: 14px; border-radius: 13px; }
   .panel-heading { margin-bottom: 14px; gap: 8px; }

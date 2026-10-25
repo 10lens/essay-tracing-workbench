@@ -1,5 +1,5 @@
 /* Static/offline app shell. All essay content remains in the page's local runtime. */
-const CACHE_NAME = "essay-tracing-workbench-pwa-v4";
+const CACHE_NAME = "essay-tracing-workbench-pwa-v5";
 const LOCAL_FILES = [
   "./",
   "./index.html",
