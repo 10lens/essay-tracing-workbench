@@ -101,9 +101,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); display: block; 
 .icon-button svg { width: 15px; height: 15px; }
 .preview-scroll { overflow: auto; max-width: 100%; border: 1px solid #e1e5ed; background: #e9edf5; border-radius: 6px; padding: clamp(6px, 1.1vw, 13px); }
 .paper-wrap { position: relative; margin: 0 auto; width: 100%; aspect-ratio: 1516 / 1061; background: white; box-shadow: 0 2px 9px rgba(28,39,67,.12); }
-#previewFallback { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: fill; }
-#previewCanvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; aspect-ratio: 1516 / 1061; background: transparent; opacity: 0; pointer-events: none; }
-.paper-wrap.has-rendered #previewFallback { display: none; }
+#previewFallback { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; object-fit: fill; }
+#previewCanvas { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; aspect-ratio: 1516 / 1061; background: transparent; opacity: 1; pointer-events: none; }
+/* Keep the PNG visible under the transparent canvas on all devices. */
+.paper-wrap.has-rendered #previewFallback { display: block; }
 .paper-wrap.has-rendered #previewCanvas { opacity: 1; }
 .preview-footer { margin-top: 11px; display: flex; align-items: flex-start; gap: 8px; font-size: 10px; line-height: 1.6; color: #8792a6; }
 .status-dot { margin-top: 4px; background: #45a880; }

@@ -6,6 +6,7 @@ import {
 const $ = id => document.getElementById(id);
 const LOCAL_KEY = "essay-tracing-workbench-draft-v1";
 const PREVIEW_DPI = 300;
+const BUILTIN_FONT_FAMILY = "WorkbenchKai";
 let templatePdfBytes = null;
 let templateImage = null;
 let templatePdfError = null;
@@ -13,6 +14,9 @@ let templateImageError = null;
 let currentFontBytes = null;
 let currentFontFilename = "";
 let currentFontFace = null;
+let builtinFontLoaded = false;
+let builtinFontError = null;
+let builtinFontPromise = null;
 let renderFrame = 0;
 let toastTimer = null;
 let lastComposition = null;
@@ -119,22 +123,45 @@ function updateRangeLabels() {
 function updateFontStatus(extra = "") {
   if (currentFontBytes) {
     $("fontStatus").textContent = `已加载本地字体：${currentFontFilename || "自定义字体"}。仅在当前设备使用，不会上传。`;
-  } else {
-    const labels = { kai: "楷体", song: "宋体", sans: "黑体" };
-    $("fontStatus").textContent = `${extra || `优先使用设备上的${labels[$("fontStyle").value] || "楷体"}`}；不同设备的可用字体可能不同。`;
-  }
-}
-
-function drawPreviewBase() {
-  const canvas = $("previewCanvas");
-  const ctx = canvas.getContext("2d", { alpha: false });
-  if (!templateImage || !templateImage.complete || !templateImage.naturalWidth) {
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     return;
   }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+  const style = $("fontStyle").value;
+  if (style === "kai") {
+    if (builtinFontLoaded) $("fontStatus").textContent = "已使用随网页内置的中文楷体，电脑与手机字形一致。字体文件约 4.5 MB，仅需缓存一次。";
+    else if (builtinFontError) $("fontStatus").textContent = `内置楷体加载失败，暂时回退设备字体。${extra || builtinFontError}`;
+    else $("fontStatus").textContent = "正在加载随网页内置的中文楷体；加载完成后，预览与导出将使用同一字体。";
+    return;
+  }
+  const labels = { song: "宋体", sans: "黑体" };
+  $("fontStatus").textContent = `${extra || `当前使用设备上的${labels[style] || "字体"}`}；此选项的字形可能因设备而异。`;
+}
+
+async function loadBuiltinKaiFont() {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  try {
+    const fontUrl = new URL("./assets/arphic-kaiti-gb.ttf", document.baseURI).href;
+    const response = await fetch(fontUrl, { cache: "force-cache", signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}：${fontUrl}`);
+    const bytes = await response.arrayBuffer();
+    const face = new FontFace(BUILTIN_FONT_FAMILY, bytes, { style: "normal", weight: "400" });
+    await face.load();
+    document.fonts.add(face);
+    await document.fonts.load(`12px "${BUILTIN_FONT_FAMILY}"`, "中文作文成长练习范文点评");
+    builtinFontLoaded = true;
+    builtinFontError = null;
+    updateFontStatus();
+    scheduleRender();
+    return true;
+  } catch (error) {
+    builtinFontLoaded = false;
+    builtinFontError = error?.name === "AbortError" ? "字体下载超时；请检查网络并刷新。" : (error?.message || "字体文件不可用");
+    console.error("Built-in Kai font failed to load:", error);
+    updateFontStatus();
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function evaluateComposition() {
@@ -179,16 +206,16 @@ function renderNow() {
     canvas.width = templateImage.naturalWidth || 1516;
     canvas.height = templateImage.naturalHeight || 1061;
   }
-  drawPreviewBase();
+  // The PNG remains visible underneath. This canvas is only a transparent text layer,
+  // so a mobile canvas/context issue can never make the actual answer-card grid disappear.
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) {
+    setStatus("浏览器无法创建预览画布；空白答题卡底图仍可查看，并可尝试导出 PDF。", "warning");
+    return;
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const { rows, info } = evaluateComposition();
-  const ctx = canvas.getContext("2d", { alpha: false });
-  // The base has already been drawn; use a temporary transparent layer for the overlaid text.
-  const overlay = document.createElement("canvas");
-  overlay.width = canvas.width;
-  overlay.height = canvas.height;
-  const overlayCtx = overlay.getContext("2d");
-  drawTextOverlay(overlayCtx, rows, getOptions(), overlay.width, overlay.height);
-  ctx.drawImage(overlay, 0, 0);
+  drawTextOverlay(ctx, rows, getOptions(), canvas.width, canvas.height);
   $("paperWrap")?.classList.add("has-rendered");
   lastComposition = { rows, info };
   updateCompositionStatus(info);
@@ -282,6 +309,7 @@ async function exportPdf() {
   if (!templatePdfBytes) throw new Error("答题卡 PDF 模板尚未加载完成，请稍后重试。");
   const { rows, info } = lastComposition || evaluateComposition();
   if (info.conflict || info.overflow) throw new Error("内容与点评区存在冲突或超出格数，请先根据预览下方的提示调整。 ");
+  if (!currentFontBytes && getOptions().fontStyle === "kai" && builtinFontPromise) await builtinFontPromise;
 
   const exportScale = PREVIEW_DPI / 72;
   const overlayCanvas = document.createElement("canvas");
@@ -436,7 +464,7 @@ async function openProjectFile(file) {
       }
       updateFontStatus("项目已打开");
       scheduleRender();
-      showToast("项目已打开。若原来使用自定义字体，请重新选择字体文件。 ");
+      showToast("项目已打开。内置楷体会自动加载；若原来使用自定义字体，请重新选择字体文件。 ");
     }
   } catch (error) {
     showToast(`打开项目失败：${error.message || "文件格式不正确"}`);
@@ -477,7 +505,7 @@ function bindEvents() {
     currentFontFilename = "";
     updateFontStatus();
     scheduleRender();
-    showToast("已恢复使用当前设备的字体。 ");
+    showToast("已恢复网页内置楷体（楷体选项）；如选择宋体或黑体则会使用设备字体。 ");
   });
   $("critiquePlacement").addEventListener("change", () => {
     $("critiqueGapSetting").style.opacity = $("critiquePlacement").value === "bottom" ? ".45" : "1";
@@ -513,6 +541,8 @@ function bindEvents() {
 async function initialize() {
   bindEvents();
   updateRangeLabels();
+  // Start font loading in parallel with the template image/PDF so the blank grid appears immediately.
+  builtinFontPromise = loadBuiltinKaiFont();
   const restored = restoreDraft();
   if (!restored) setDefaultContent();
   // If opened as a standalone web app, the same responsive layout still follows viewport width and aspect ratio.
@@ -520,6 +550,8 @@ async function initialize() {
     navigator.serviceWorker.register("./sw.js").catch(error => console.warn("Service worker registration skipped:", error));
   }
   await loadTemplateAssets();
+  await builtinFontPromise;
+  if (builtinFontLoaded) scheduleRender();
   if (restored) showToast("已恢复本机上次编辑的内容。 ");
 }
 

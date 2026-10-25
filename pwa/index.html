@@ -79,12 +79,12 @@
           <div class="setting setting-wide">
             <label class="field-label" for="fontStyle">字体</label>
             <div class="font-row">
-              <select id="fontStyle" class="select-input"><option value="kai">楷体优先</option><option value="song">宋体优先</option><option value="sans">黑体优先</option></select>
+              <select id="fontStyle" class="select-input"><option value="kai">内置楷体（推荐）</option><option value="song">设备宋体</option><option value="sans">设备黑体</option></select>
               <label class="button button-secondary file-button font-upload-button" for="fontImport">选择字体文件</label>
               <input id="fontImport" type="file" accept=".ttf,.otf,font/ttf,font/otf" hidden>
               <button id="resetFont" type="button" class="button button-quiet font-reset-button">恢复设备字体</button>
             </div>
-            <div class="font-status" id="fontStatus">优先使用设备上的楷体；不同设备的字体可能不同。</div>
+            <div class="font-status" id="fontStatus">正在加载网页内置楷体，完成后电脑与手机将使用同一字形。</div>
           </div>
         </div>
       </section>
@@ -158,7 +158,7 @@
           </div>
           <div id="warningBox" class="warning-box" hidden></div>
         </section>
-        <div class="preview-tip"><span class="tip-icon">✦</span><span>预览使用当前屏幕字体；导出 PDF 时会以高分辨率叠加文字，并保留答题卡原始矢量格线。</span></div>
+        <div class="preview-tip"><span class="tip-icon">✦</span><span>默认使用随网页内置的中文楷体；文字以透明层实时叠加，答题卡格线始终单独显示。PDF 以高分辨率文字图层导出并保留原始矢量格线。</span></div>
       </div>
     </section>
   </main>

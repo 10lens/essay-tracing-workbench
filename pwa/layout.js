@@ -167,7 +167,7 @@ function chooseFontFamily(style, customLoaded) {
   if (customLoaded) return '"UploadedEssayFont", serif';
   if (style === "song") return '"Songti SC", "SimSun", "Noto Serif CJK SC", serif';
   if (style === "sans") return '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
-  return '"KaiTi", "STKaiti", "Kaiti SC", "KaiTi_GB2312", "AR PL UKai CN", serif';
+  return '"WorkbenchKai", "KaiTi", "STKaiti", "Kaiti SC", "KaiTi_GB2312", "AR PL UKai CN", serif';
 }
 
 function textBaselineForCenter(ctx, character, centerY, fontPx) {
